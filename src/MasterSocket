@@ -1,0 +1,85 @@
+import java.io.*;
+import java.net.*;
+public class MasterSocket {
+    static int maxServer = 8;
+    static final int[] tab_port = {25545,25546,25547,25548,25549,25550,25551,25552};
+    static String[] tab_ports_saisis = new String[maxServer];  // ← NOUVEAU
+    static final String ip = "127.0.0.1";
+    static BufferedReader[] reader = new BufferedReader[maxServer];
+    static PrintWriter[] writer = new PrintWriter[maxServer];
+    static Socket[] sockets = new Socket[maxServer];
+
+    public static void main(String[] args) throws Exception {
+        int totalCount = 16000000;
+        int total = 0;
+        double pi;
+        int numWorkers = maxServer;
+        BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+        String s;
+
+        System.out.println("#########################################");
+        System.out.println("# Computation of PI by MC method        #");
+        System.out.println("#########################################");
+
+        System.out.println("\n How many workers (< maxServer): ");
+        s = bufferRead.readLine();
+        numWorkers = Integer.parseInt(s);
+
+        // ← SAISIE PORTS CORRIGÉE
+        for (int i=0; i<numWorkers; i++){
+            System.out.println("Enter worker"+ i +" port : ");
+            tab_ports_saisis[i] = bufferRead.readLine();  // ← STOCKAGE
+            System.out.println("You select " + tab_ports_saisis[i]);
+        }
+
+        // ← CONNEXION CORRIGÉE
+        for(int i = 0 ; i < numWorkers ; i++) {
+            int portSaisi = Integer.parseInt(tab_ports_saisis[i]);  // ← FIX
+            sockets[i] = new Socket(ip, portSaisi);
+            System.out.println("SOCKET = " + sockets[i]);
+
+            reader[i] = new BufferedReader(new InputStreamReader(sockets[i].getInputStream()));
+            writer[i] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sockets[i].getOutputStream())),true);
+        }
+
+        // ← RESTE IDENTIQUE
+        String message_to_send = String.valueOf(totalCount);
+        String message_repeat = "y";
+        long stopTime, startTime;
+
+        while (message_repeat.equals("y")){
+            startTime = System.currentTimeMillis();
+            for(int i = 0 ; i < numWorkers ; i++) {
+                writer[i].println(message_to_send);
+            }
+
+            for(int i = 0 ; i < numWorkers ; i++) {
+                tab_ports_saisis[i] = reader[i].readLine();  // Réutilise tableau
+                System.out.println("Client sent: " + tab_ports_saisis[i]);
+            }
+
+            for(int i = 0 ; i < numWorkers ; i++) {
+                total += Integer.parseInt(tab_ports_saisis[i]);
+            }
+            pi = 4.0 * total / totalCount / numWorkers;
+
+            stopTime = System.currentTimeMillis();
+
+            System.out.println("\nPi : " + pi );
+            System.out.println("Error: " + (Math.abs((pi - Math.PI)) / Math.PI) +"\n");
+            System.out.println("Ntot: " + totalCount*numWorkers);
+            System.out.println("Available processors: " + numWorkers);
+            System.out.println("Time Duration (ms): " + (stopTime - startTime) + "\n");
+
+            System.out.println("\n Repeat computation (y/N): ");
+            message_repeat = bufferRead.readLine();
+        }
+
+        for(int i = 0 ; i < numWorkers ; i++) {
+            writer[i].println("END");
+            reader[i].close();
+            writer[i].close();
+            sockets[i].close();
+        }
+    }
+}
