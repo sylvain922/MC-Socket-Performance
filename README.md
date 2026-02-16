@@ -8,7 +8,6 @@ utilisant une architecture Master-Worker basée sur des sockets TCP/IP Java.
 - `src/` : Code source Java (Master et Worker)
 - `scripts/` : Scripts d'automatisation des tests
 - `data/` : Résultats expérimentaux bruts (CSV) + Graphiques et analyses
-- `rapport/` : Rapport d'évaluation PDF
 
 ## Compilation
 
